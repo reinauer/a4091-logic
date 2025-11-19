@@ -126,8 +126,13 @@ SID		= cpucyc & SLAVE & addr:[8fffff..8c0000] & READ;
    to the interrupt register.  Once the vector register is written, we
    use vectors until reset. */
 
-INTASS		= INTREG
-		# INTASS & !RST;
+/* Modified Interrupt Assignment Latch
+   - Writing to Base + 0x88xxxx (A17=0) SETS the vector flag (Quick Interrupts).
+   - Writing to Base + 0x8Axxxx (A17=1) CLEARS the vector flag (Autovectors).
+*/
+
+INTASS = (INTREG & !A17)          /* SET condition: Write to 880000 range */
+       # (INTASS & !RST & !(INTREG & A17)); /* HOLD condition: Hold unless Reset OR Clear write */
 
 /* Should we be responding to an interrupt poll?  Only if the interrupt has been
    locally generated.  This strobe indicates the start of a service condition.
